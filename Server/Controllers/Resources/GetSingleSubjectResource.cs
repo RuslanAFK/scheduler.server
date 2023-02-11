@@ -1,8 +1,6 @@
-﻿using Server.Extensions;
+namespace Server.Controllers.Resources;
 
-namespace Server.Core.Models;
-
-public class Subject : IAuthFilterable
+public class GetSingleSubjectResource
 {
     public int Id { get; set; }
     public string Name { get; set; }
@@ -15,6 +13,4 @@ public class Subject : IAuthFilterable
     public int Hours { get; set; }
     public int Minutes { get; set; }
     public int Type { get; set; }
-    public int UserId { get; set; }
-    public User User { get; set; }
 }

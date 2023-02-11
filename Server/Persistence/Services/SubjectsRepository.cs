@@ -14,16 +14,16 @@ public class SubjectsRepository : ISubjectsRepository
         _context = context;
     }
 
-    public async Task<ListResponse<Subject>> GetAsync(QueryObject queryObject, string username)
+    public async Task<ListResponse<Subject>> GetAsync(string username)
     {
         var subjects = _context.Subjects
             .Include(s => s.User)
-            .ApplyAuthFiltering(username)
-            .ApplySearching(queryObject);
+            .ApplyAuthFiltering(username);
+        var subjectsGrouping = await subjects.ApplySubjectGrouping()
+            .ToDictionaryAsync(g => g.Key, g => g.ToList());
         var response = new ListResponse<Subject>()
         {
-            Count = subjects.Count(),
-            Items = await subjects.ApplyPagination(queryObject, 4).ToListAsync()
+            Items = subjectsGrouping
         };
         return response;
     }

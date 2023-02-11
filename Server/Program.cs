@@ -12,11 +12,11 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CORSPolicy", b =>
+    options.AddPolicy("AllowAll", b =>
     {
         b.AllowAnyMethod()
             .AllowAnyHeader()
-            .WithOrigins("http://localhost:3000", "https://appname.azurestaticapps.net");
+            .AllowAnyOrigin();
     });
 });
 
@@ -76,6 +76,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseCors("CORSPolicy");
+app.UseCors("AllowAll");
 
 app.Run();

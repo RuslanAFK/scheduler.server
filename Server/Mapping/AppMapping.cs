@@ -13,7 +13,8 @@ public class AppMapping : Profile
 
         CreateMap<CreateSubjectResource, Subject>();
         CreateMap<UpdateSubjectResource, Subject>();
-        CreateMap<Subject, GetSubjectResource>();
+        CreateMap<Subject, GetSingleSubjectResource>();
+        CreateMap<Subject, GetSubjectsResource>();
 
         CreateMap(typeof(ListResponse<>), typeof(ListResponseResource<>));
     }

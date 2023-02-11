@@ -13,32 +13,30 @@ namespace Server.Controllers
     [ApiController]
     public class SubjectsController : Controller
     {
-        private IMapper _mapper;
-        private IUsersRepository _usersRepository;
-        private ISubjectsRepository _subjectsRepository;
-        private IUnitOfWork _unitOfWork;
-        private ITokenManager _tokenManager;
+        private readonly IMapper _mapper;
+        private readonly IUsersRepository _usersRepository;
+        private readonly ISubjectsRepository _subjectsRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public SubjectsController(IMapper mapper, IUsersRepository usersRepository, IUnitOfWork unitOfWork, 
-            ISubjectsRepository subjectsRepository, ITokenManager tokenManager)
+            ISubjectsRepository subjectsRepository)
         {
             _mapper = mapper;
             _usersRepository = usersRepository;
             _unitOfWork = unitOfWork;
             _subjectsRepository = subjectsRepository;
-            _tokenManager = tokenManager;
         }
 
         [HttpGet]
         [Authorize(AuthenticationSchemes = "Asymmetric")]
-        public async Task<IActionResult> GetSubjects([FromQuery] QueryObject queryObject)
+        public async Task<IActionResult> GetSubjects()
         {
             var username = (HttpContext.User.Identity as ClaimsIdentity)?.Name;
             if (username == null)
                 return BadRequest();
-            var subjects = await _subjectsRepository.GetAsync(queryObject, username);
+            var subjects = await _subjectsRepository.GetAsync(username);
             var res = 
-                _mapper.Map<ListResponse<Subject>, ListResponseResource<GetSubjectResource>>(subjects);
+                _mapper.Map<ListResponse<Subject>, ListResponseResource<GetSubjectsResource>>(subjects);
             return Ok(res);
         }
 
@@ -52,7 +50,7 @@ namespace Server.Controllers
             var subject = await _subjectsRepository.GetByIdAsync(id, username);
             if (subject == null)
                 return NotFound();
-            var res = _mapper.Map<Subject, GetSubjectResource>(subject);
+            var res = _mapper.Map<Subject, GetSingleSubjectResource>(subject);
             return Ok(res);
         }
         
