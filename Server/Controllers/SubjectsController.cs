@@ -2,7 +2,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Server.Controllers.Resources;
 using Server.Core.Abstractions;
 using Server.Core.Models;
@@ -56,19 +55,11 @@ public class SubjectsController : Controller
         var username = GetUsername();
         if (username == null)
             return BadRequest();
-        try
-        {
-            var subject = _mapper.Map<CreateSubjectResource, Subject>(resource);
-            var success = await _subjectsService.CreateAsync(subject, username);
-            if (success)
-                return NoContent();
-            return BadRequest();
-        }
-        catch (DbUpdateException e)
-        {
-            var inner = e.InnerException;
-            return BadRequest(inner==null ? e.Message : inner.Message);
-        }
+        var subject = _mapper.Map<CreateSubjectResource, Subject>(resource);
+        var success = await _subjectsService.CreateAsync(subject, username);
+        if (success)
+            return NoContent();
+        return BadRequest();
     }
         
     [HttpPut]
@@ -82,18 +73,10 @@ public class SubjectsController : Controller
         if (subject == null)
             return NotFound();
         _mapper.Map(resource, subject);
-        try
-        {
-            var success = await _subjectsService.UpdateAsync(subject);
-            if (success)
-                return NoContent();
-            return BadRequest();
-        }
-        catch (DbUpdateException e)
-        {
-            var inner = e.InnerException;
-            return BadRequest(inner==null ? e.Message : inner.Message);
-        }
+        var success = await _subjectsService.UpdateAsync(subject);
+        if (success)
+            return NoContent();
+        return BadRequest();
     }
         
     [HttpDelete("{id:int}")]
@@ -106,18 +89,10 @@ public class SubjectsController : Controller
         var subject = await _subjectsService.GetByIdAsync(id, username);
         if (subject == null)
             return NotFound();
-        try
-        {
-            var success = await _subjectsService.RemoveAsync(subject);
-            if (success)
-                return NoContent();
-            return BadRequest();
-        }
-        catch (DbUpdateException e)
-        {
-            var inner = e.InnerException;
-            return BadRequest(inner==null ? e.Message : inner.Message);
-        }
+        var success = await _subjectsService.RemoveAsync(subject);
+        if (success)
+            return NoContent();
+        return BadRequest();
     }
     private string? GetUsername()
     {

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Server.Controllers.Resources;
 using Server.Core.Abstractions;
 using Server.Core.Models;
@@ -24,36 +23,21 @@ public class UsersController : Controller
     public async Task<IActionResult> Login(LoginResource loginResource)
     {
         var user = _mapper.Map<LoginResource, User>(loginResource);
-        try
-        {
-            var authResult = await _usersService.GetAuthResult(user);
-            if (authResult == null)
-                return NotFound();
-            var result = _mapper.Map<AuthResult, AuthResultResource>(authResult);
-            return Ok(result);
-        }
-        catch (InvalidDataException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var authResult = await _usersService.GetAuthResult(user);
+        if (authResult == null)
+            return NotFound();
+        var result = _mapper.Map<AuthResult, AuthResultResource>(authResult);
+        return Ok(result);
     }
 
     [HttpPost("Register")]
     public async Task<IActionResult> Register(RegisterResource registerResource)
     {
         registerResource.Password = BCrypt.Net.BCrypt.HashPassword(registerResource.Password);
-        try
-        {  
-            var userToCreate = _mapper.Map<RegisterResource, User>(registerResource);
-            var createSuccessful = await _usersService.RegisterAsync(userToCreate);
-            if (createSuccessful)
-                return NoContent();
-            return BadRequest();
-        }
-        catch (DbUpdateException e)
-        {
-            var inner = e.InnerException;
-            return BadRequest(inner==null ? e.Message : inner.Message);
-        }
+        var userToCreate = _mapper.Map<RegisterResource, User>(registerResource);
+        var createSuccessful = await _usersService.RegisterAsync(userToCreate);
+        if (createSuccessful)
+            return NoContent();
+        return BadRequest();
     }
 }
