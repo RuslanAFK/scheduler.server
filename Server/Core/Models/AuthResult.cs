@@ -1,4 +1,4 @@
-namespace Server.Controllers.Resources;
+namespace Server.Core.Models;
 
 public class AuthResult
 {

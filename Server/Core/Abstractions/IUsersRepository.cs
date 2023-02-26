@@ -1,6 +1,6 @@
 using Server.Core.Models;
 
-namespace Server.Core.Services;
+namespace Server.Core.Abstractions;
 
 public interface IUsersRepository
 {

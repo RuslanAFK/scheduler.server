@@ -2,10 +2,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
+using Server.Core.Abstractions;
 using Server.Core.Models;
-using Server.Core.Services;
 
-namespace Server.Persistence.Services;
+namespace Server.Persistence.Repositories;
 
 public class TokenManager : ITokenManager
 {

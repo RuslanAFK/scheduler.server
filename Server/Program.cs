@@ -1,12 +1,13 @@
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Server.Core.Services;
+using Server.Core.Abstractions;
 using Server.Persistence;
-using Server.Persistence.Services;
+using Server.Persistence.Repositories;
+using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -28,8 +29,11 @@ builder.Services.AddSingleton<RsaSecurityKey>(provider =>
     rsa.ImportRSAPublicKey(Convert.FromBase64String(builder.Configuration["Jwt:PublicKey"]), out _);
     return new RsaSecurityKey(rsa);
 });
-builder.Services.AddAuthentication()
-    .AddJwtBearer("Asymmetric", options =>
+builder.Services.AddAuthentication(x =>
+    {
+        x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
     {
         var rsa = builder.Services.BuildServiceProvider().GetRequiredService<RsaSecurityKey>();
         
@@ -47,6 +51,8 @@ builder.Services.AddAuthentication()
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<ISubjectsRepository, SubjectsRepository>();
+builder.Services.AddScoped<IUsersService, UsersService>();
+builder.Services.AddScoped<ISubjectsService, SubjectsService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<ITokenManager, TokenManager>();
 

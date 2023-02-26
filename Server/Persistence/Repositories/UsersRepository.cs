@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Server.Core.Abstractions;
 using Server.Core.Models;
-using Server.Core.Services;
 
-namespace Server.Persistence.Services;
+namespace Server.Persistence.Repositories;
 
 public class UsersRepository : IUsersRepository
 {

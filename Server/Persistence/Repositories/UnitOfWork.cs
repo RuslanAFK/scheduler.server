@@ -1,6 +1,6 @@
-using Server.Core.Services;
+using Server.Core.Abstractions;
 
-namespace Server.Persistence.Services;
+namespace Server.Persistence.Repositories;
 
 public class UnitOfWork : IUnitOfWork
 {

@@ -1,4 +1,4 @@
-namespace Server.Core.Services;
+namespace Server.Core.Abstractions;
 
 public interface IUnitOfWork
 {

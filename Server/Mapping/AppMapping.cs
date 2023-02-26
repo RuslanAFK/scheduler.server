@@ -15,6 +15,7 @@ public class AppMapping : Profile
         CreateMap<UpdateSubjectResource, Subject>();
         CreateMap<Subject, GetSingleSubjectResource>();
         CreateMap<Subject, GetSubjectsResource>();
+        CreateMap<AuthResult, AuthResultResource>();
 
         CreateMap(typeof(ListResponse<>), typeof(ListResponseResource<>));
     }

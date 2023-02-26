@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Controllers.Resources;
+using Server.Core.Abstractions;
 using Server.Core.Models;
-using Server.Core.Services;
 
 namespace Server.Controllers;
 
@@ -11,36 +11,31 @@ namespace Server.Controllers;
 [ApiController]
 public class UsersController : Controller
 {
-    private readonly IUsersRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly ITokenManager _tokenManager;
+    private readonly IUsersService _usersService;
 
-    public UsersController(IUsersRepository repository, IUnitOfWork unitOfWork, IMapper mapper,
-        ITokenManager tokenManager)
+    public UsersController(IMapper mapper, IUsersService usersService)
     {
-        _repository = repository;
-        _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _tokenManager = tokenManager;
+        _usersService = usersService;
     }
 
     [HttpPost("Login")]
     public async Task<IActionResult> Login(LoginResource loginResource)
     {
         var user = _mapper.Map<LoginResource, User>(loginResource);
-        var foundUser = await _repository.CheckCredentialsAsync(user);
-        if (foundUser == null)
-            return NotFound();
-        if (!BCrypt.Net.BCrypt.Verify(user.Password, foundUser.Password)) 
-            return BadRequest("Provided incorrect password.");
-        var token = _tokenManager.GenerateToken(foundUser);
-        return Ok(new AuthResult
+        try
         {
-            Id = foundUser.Id,
-            Username = foundUser.Username,
-            Token = token,
-        });
+            var authResult = await _usersService.GetAuthResult(user);
+            if (authResult == null)
+                return NotFound();
+            var result = _mapper.Map<AuthResult, AuthResultResource>(authResult);
+            return Ok(result);
+        }
+        catch (InvalidDataException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost("Register")]
@@ -50,9 +45,8 @@ public class UsersController : Controller
         try
         {  
             var userToCreate = _mapper.Map<RegisterResource, User>(registerResource);
-            _repository.Signup(userToCreate);
-            var createSuccessful = await _unitOfWork.CompleteAsync();
-            if (createSuccessful > 0)
+            var createSuccessful = await _usersService.RegisterAsync(userToCreate);
+            if (createSuccessful)
                 return NoContent();
             return BadRequest();
         }
