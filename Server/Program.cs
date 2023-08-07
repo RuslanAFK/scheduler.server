@@ -52,10 +52,13 @@ builder.Services.AddAuthentication(x =>
 
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<ISubjectsRepository, SubjectsRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddScoped<IUsersService, UsersService>();
 builder.Services.AddScoped<ISubjectsService, SubjectsService>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddTransient<ITokenManager, TokenManager>();
+
+builder.Services.AddScoped<IPasswordManager, PasswordManager>();
+builder.Services.AddScoped<IClaimsManager, ClaimsManager>();
 
 builder.Services.AddControllers();
 
@@ -76,7 +79,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

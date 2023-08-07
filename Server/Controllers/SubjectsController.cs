@@ -1,10 +1,10 @@
-﻿using System.Security.Claims;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Controllers.Resources;
 using Server.Core.Abstractions;
 using Server.Core.Models;
+using Server.Extensions;
 
 namespace Server.Controllers;
 
@@ -14,88 +14,63 @@ public class SubjectsController : Controller
 {
     private readonly IMapper _mapper;
     private readonly ISubjectsService _subjectsService;
+    private readonly IUsersService _userService;
 
-    public SubjectsController(IMapper mapper, ISubjectsService subjectsService)
+    public SubjectsController(IMapper mapper, ISubjectsService subjectsService, IUsersService userService)
     {
         _mapper = mapper;
         _subjectsService = subjectsService;
+        _userService = userService;
     }
 
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> GetSubjects()
     {
-        var username = GetUsername();
-        if (username == null)
-            return BadRequest();
-        var subjects = await _subjectsService.GetAsync(username);
-        var res = 
-            _mapper.Map<ListResponse<Subject>, ListResponseResource<GetSubjectsResource>>(subjects);
-        return Ok(res);
+        var username = _userService.GetUsername(HttpContext?.User);
+        var studyWeek = await _subjectsService.GetAllAsync(username);
+        var result = _mapper.Map<ListResponse<Subject>, ListResponseResource<GetSubjectsResource>>(studyWeek);
+        return Ok(result);
     }
 
     [HttpGet("{id:int}")]
     [Authorize]
     public async Task<IActionResult> GetSubject(int id)
     {
-        var username = GetUsername();
-        if (username == null)
-            return BadRequest();
+        var username = _userService.GetUsername(HttpContext?.User);
         var subject = await _subjectsService.GetByIdAsync(id, username);
-        if (subject == null)
-            return NotFound();
-        var res = _mapper.Map<Subject, GetSingleSubjectResource>(subject);
-        return Ok(res);
+        var result = _mapper.Map<Subject, GetSingleSubjectResource>(subject);
+        return Ok(result);
     }
         
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> Create(CreateSubjectResource resource)
     {
-        var username = GetUsername();
-        if (username == null)
-            return BadRequest();
+        var username = _userService.GetUsername(HttpContext?.User);
         var subject = _mapper.Map<CreateSubjectResource, Subject>(resource);
-        var success = await _subjectsService.CreateAsync(subject, username);
-        if (success)
-            return NoContent();
-        return BadRequest();
+        await _subjectsService.CreateAsync(subject, username);
+        return NoContent();
     }
         
     [HttpPut]
     [Authorize]
     public async Task<IActionResult> Update(UpdateSubjectResource resource)
     {
-        var username = GetUsername();
-        if (username == null)
-            return BadRequest();
+        var username = _userService.GetUsername(HttpContext?.User);
         var subject = await _subjectsService.GetByIdAsync(resource.Id, username);
-        if (subject == null)
-            return NotFound();
         _mapper.Map(resource, subject);
-        var success = await _subjectsService.UpdateAsync(subject);
-        if (success)
-            return NoContent();
-        return BadRequest();
+        await _subjectsService.UpdateAsync(subject);
+        return NoContent();
     }
         
     [HttpDelete("{id:int}")]
     [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
-        var username = GetUsername();
-        if (username == null)
-            return BadRequest();
+        var username = _userService.GetUsername(HttpContext?.User);
         var subject = await _subjectsService.GetByIdAsync(id, username);
-        if (subject == null)
-            return NotFound();
-        var success = await _subjectsService.RemoveAsync(subject);
-        if (success)
-            return NoContent();
-        return BadRequest();
-    }
-    private string? GetUsername()
-    {
-        return (HttpContext.User.Identity as ClaimsIdentity)?.Name;
+        await _subjectsService.RemoveAsync(subject);
+        return NoContent();
     }
 }

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Server.Controllers.Resources;
 using Server.Core.Models;
+using Server.Extensions;
 
 namespace Server.Mapping;
 
@@ -16,6 +17,7 @@ public class AppMapping : Profile
         CreateMap<Subject, GetSingleSubjectResource>();
         CreateMap<Subject, GetSubjectsResource>();
         CreateMap<AuthResult, AuthResultResource>();
+        CreateMap<StudyWeek, StudyWeekResource>();
 
         CreateMap(typeof(ListResponse<>), typeof(ListResponseResource<>));
     }

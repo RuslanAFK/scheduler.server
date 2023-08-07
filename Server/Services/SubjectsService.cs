@@ -1,5 +1,6 @@
 using Server.Core.Abstractions;
 using Server.Core.Models;
+using Server.Extensions;
 
 namespace Server.Services;
 
@@ -9,48 +10,43 @@ public class SubjectsService : ISubjectsService
     private readonly ISubjectsRepository _subjectsRepository;
     private readonly IUsersRepository _usersRepository;
 
-    
-    public Task<ListResponse<Subject>> GetAsync(string username)
-    {
-        return _subjectsRepository.GetAsync(username);
-    }
-
-    public Task<Subject?> GetByIdAsync(int id, string username)
-    {
-        return _subjectsRepository.GetByIdAsync(id, username);
-    }
-
-    public async Task<bool> CreateAsync(Subject subject, string username)
-    {
-       var user  = await _usersRepository.GetUserByUsername(username);
-       if (user == null)
-           return false;
-       subject.User = user;
-       await _subjectsRepository.CreateAsync(subject);
-       return await IsCompleted();
-    }
-
-    public async Task<bool> UpdateAsync(Subject subject)
-    {
-        _subjectsRepository.Update(subject);
-        return await IsCompleted();
-    }
-
-    public async Task<bool> RemoveAsync(Subject subject)
-    {
-        _subjectsRepository.Remove(subject);
-        return await IsCompleted();
-    }
-
     public SubjectsService(IUnitOfWork unitOfWork, ISubjectsRepository subjectsRepository, IUsersRepository usersRepository)
     {
         _unitOfWork = unitOfWork;
         _subjectsRepository = subjectsRepository;
         _usersRepository = usersRepository;
     }
-    private async Task<bool> IsCompleted()
+    public async Task<ListResponse<Subject>> GetAllAsync(string username)
     {
-        return await _unitOfWork.CompleteAsync() > 0;
+        return await _subjectsRepository.GetAllAsync(username);
     }
-    
+
+    public Task<Subject> GetByIdAsync(int id, string username)
+    {
+        return _subjectsRepository.GetByIdAsync(id, username);
+    }
+
+    public async Task CreateAsync(Subject subject, string username)
+    {
+       var user  = await _usersRepository.GetByUsernameAsync(username);
+       AssignUser(subject, user);
+       await _subjectsRepository.AddAsync(subject);
+       await _unitOfWork.CompleteAsyncOrThrowIfNotCompleted();
+    }
+
+    private void AssignUser(Subject subject, User user)
+    {
+        subject.User = user;
+    }
+    public async Task UpdateAsync(Subject subject)
+    {
+        _subjectsRepository.Update(subject);
+        await _unitOfWork.CompleteAsyncOrThrowIfNotCompleted();
+    }
+
+    public async Task RemoveAsync(Subject subject)
+    {
+        _subjectsRepository.Remove(subject);
+        await _unitOfWork.CompleteAsyncOrThrowIfNotCompleted();
+    }
 }

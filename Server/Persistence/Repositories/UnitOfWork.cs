@@ -1,3 +1,4 @@
+using Domain.Exceptions;
 using Server.Core.Abstractions;
 
 namespace Server.Persistence.Repositories;
@@ -10,8 +11,10 @@ public class UnitOfWork : IUnitOfWork
     {
         _context = context;
     }
-    public async Task<int> CompleteAsync()
+    public async Task CompleteAsyncOrThrowIfNotCompleted()
     {
-        return await _context.SaveChangesAsync();
+        var entries = await _context.SaveChangesAsync();
+        if (entries <= 0)
+            throw new OperationNotSuccessfulException();
     }
 }

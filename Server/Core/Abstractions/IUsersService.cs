@@ -1,9 +1,11 @@
 using Server.Core.Models;
+using System.Security.Claims;
 
 namespace Server.Core.Abstractions;
 
 public interface IUsersService
 {
-    Task<bool> RegisterAsync(User userToCreate);
-    Task<AuthResult?> GetAuthResult(User userToLogin);
+    Task RegisterAsync(User userToCreate);
+    Task<AuthResult> GetAuthResultAsync(User userToLogin);
+    string GetUsername(ClaimsPrincipal? claimsPrincipal);
 }

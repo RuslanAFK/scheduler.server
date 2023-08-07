@@ -1,50 +1,41 @@
 using Server.Core.Abstractions;
 using Server.Core.Models;
+using System.Security.Claims;
 
 namespace Server.Services;
 
 public class UsersService : IUsersService
 {
     private readonly IUsersRepository _usersRepository;
-    private readonly ITokenManager _tokenManager;
+    private readonly IClaimsManager _claimsManager;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPasswordManager _passwordManager;
 
-    public UsersService(IUsersRepository usersRepository, IUnitOfWork unitOfWork, ITokenManager tokenManager)
+    public UsersService(IUsersRepository usersRepository, IUnitOfWork unitOfWork, IClaimsManager claimsManager, IPasswordManager passwordManager)
     {
         _usersRepository = usersRepository;
         _unitOfWork = unitOfWork;
-        _tokenManager = tokenManager;
+        _claimsManager = claimsManager;
+        _passwordManager = passwordManager;
     }
-    public async Task<bool> RegisterAsync(User userToCreate)
+    public async Task RegisterAsync(User userToCreate)
     {
-        _usersRepository.Signup(userToCreate);
-        return await IsCompleted();
+        _passwordManager.SecureUser(userToCreate);
+        await _usersRepository.RegisterAsync(userToCreate);
+        await _unitOfWork.CompleteAsyncOrThrowIfNotCompleted();
     }
 
-    public async Task<AuthResult?> GetAuthResult(User userToLogin)
+    public async Task<AuthResult> GetAuthResultAsync(User userToLogin)
     {
-        var foundUser = await _usersRepository.CheckCredentialsAsync(userToLogin);
-        if (foundUser == null)
-            return null;
-        CheckPassword(userToLogin.Password, foundUser.Password);
-        var token = _tokenManager.GenerateToken(foundUser);
-        return new AuthResult
-        {
-            Id = foundUser.Id,
-            Username = foundUser.Username,
-            Token = token,
-        };
+        var username = userToLogin.Username;
+        var foundUser = await _usersRepository.GetByUsernameAsync(username);
+        _passwordManager.ThrowExceptionIfWrongPassword(userToLogin.Password, foundUser.Password);
+        var token = _claimsManager.GenerateToken(foundUser);
+        var authResult = new AuthResult(foundUser, token);
+        return authResult;
     }
-
-    private async Task<bool> IsCompleted()
+    public string GetUsername(ClaimsPrincipal? claimsPrincipal)
     {
-        return await _unitOfWork.CompleteAsync() > 0;
+        return _claimsManager.GetUsernameOrThrow(claimsPrincipal);
     }
-
-    private void CheckPassword(string password, string hash)
-    {
-        if (!BCrypt.Net.BCrypt.Verify(password, hash))
-            throw new InvalidDataException("Provided incorrect password.");
-    }
-    
 }

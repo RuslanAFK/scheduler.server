@@ -1,34 +1,37 @@
+using Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Server.Core.Abstractions;
 using Server.Core.Models;
 
 namespace Server.Persistence.Repositories;
 
-public class UsersRepository : IUsersRepository
+public class UsersRepository : BaseRepository<User>, IUsersRepository
 {
-    private readonly SchedulerDbContext _context;
-
-    public UsersRepository(SchedulerDbContext context)
+    public UsersRepository(SchedulerDbContext context) : base(context)
     {
-        _context = context;
     }
-    
-    public void Signup(User userToCreate)
+    public async Task RegisterAsync(User inputUser)
     {
-        _context.Users.Add(userToCreate);
-    }
-
-    public async Task<User?> CheckCredentialsAsync(User userToLogin)
-    {
-        var userFound = await _context.Users.SingleOrDefaultAsync(user =>
-            user.Username == userToLogin.Username);
-        return userFound;
+        var username = inputUser.Username;
+        var user = await ReturnByUsernameAsync(username);
+        ThrowIfExists(user);
+        await AddAsync(inputUser);
     }
 
-    public async Task<User?> GetUserByUsername(string username)
+    public async Task<User> GetByUsernameAsync(string username)
     {
-        var userFound = await _context.Users.SingleOrDefaultAsync(user =>
+        var user = await ReturnByUsernameAsync(username);
+        var notNullUser = ReturnOrThrowIfDoesNotExist(user, nameof(User.Username));
+        return notNullUser;
+    }
+    private async Task<User?> ReturnByUsernameAsync(string username)
+    {
+        return await _context.Users.SingleOrDefaultAsync(user =>
             user.Username == username);
-        return userFound;
+    }
+    private void ThrowIfExists(User? user)
+    {
+        if (user is not null)
+            throw new EntityAlreadyExistsException(typeof(User), nameof(User.Username));
     }
 }
